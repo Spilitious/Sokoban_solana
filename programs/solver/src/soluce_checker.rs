@@ -1,9 +1,9 @@
 use anchor_lang::prelude::*;
 use anchor_lang::system_program;
 
- use minter::cpi::accounts::GetNftData;
- use minter::program::Minter;
- use minter::{self, NftAccount};
+//  use minter::cpi::accounts::GetNftData;
+//  use minter::program::Minter;
+//  use minter::{self, NftAccount};
 
 
 #[derive(Accounts)]
@@ -33,9 +33,11 @@ pub struct Claim<'info> {
     pub system_program: Program<'info, System>,
 }
 
+/*
 #[derive(Accounts)]
 pub struct GetData<'info> {
     #[account(mut)]
+    pub game: Account<'info, GameState>,
     pub nft_account: Account<'info, NftAccount>,
     pub minter_program: Program<'info, Minter>,
 }
@@ -46,9 +48,56 @@ impl<'info> GetData<'info> {
         let cpi_accounts = GetNftData {
             nft_account: self.nft_account.to_account_info()
         };
-        CpiContext::new(cpi_program, cpi_accounts)
+
+       
+
+
+        CpiContext::new(cpi_program, cpi_accounts) 
     }
 }
+*/
+#[derive(Accounts)]
+pub struct ReadOtherData<'info> {
+    /// CHECK: We do not own this account so
+    // we must be very cautious with how we
+    // use the data
+    other_data: UncheckedAccount<'info>,
+}
+
+#[account]
+pub struct NftAccountz {
+    pub owner: Pubkey,
+    pub id: u32,
+    pub height: u8,
+    pub width: u8,
+    pub data: Vec<u8>,
+}
+
+
+
+pub fn read_other_data(
+    ctx: Context<ReadOtherData>,
+) -> Result<()> {
+
+        let data_account = &ctx.accounts.other_data;
+
+    if data_account.data_is_empty() {
+        return Err(ErrorCode::UnknownDirection.into());
+    }
+
+    let mut data_slice: &[u8] = &data_account.data.borrow();
+
+    let data_struct:NftAccountz = 
+        AccountDeserialize::try_deserialize(
+            &mut data_slice,
+        )?;
+
+    msg!("The value of x is: {}", data_struct.id);
+
+    Ok(())
+}
+
+
 /*
 pub fn set_id(ctx: Context<GetData>, data: u32) -> Result<()> {
     let cpi_program = ctx.accounts.minter_program.to_account_info();
@@ -58,11 +107,13 @@ pub fn set_id(ctx: Context<GetData>, data: u32) -> Result<()> {
     let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
     minter::cpi::set_data(cpi_ctx, data)
 }
-*/
+
 pub fn set_id(ctx: Context<GetData>, data: u32) -> Result<()> {
+
+    // ctx.accounts.game.test = ctx.accounts.nft_account.id; 
     minter::cpi::set_data(ctx.accounts.set_data_ctx(), data)
 }
-
+*/
 
 pub fn claim(ctx: Context<Claim>) -> Result<()> {
     if ctx.accounts.game.leader != *ctx.accounts.signer.key {
@@ -70,17 +121,6 @@ pub fn claim(ctx: Context<Claim>) -> Result<()> {
     }
 
     let lamports_to_transfer:u64 = 1_000_000;
-/*
-    let cpi_context = CpiContext::new(
-        ctx.accounts.system_program.to_account_info(),
-        system_program::Transfer {
-            from: ctx.accounts.game.to_account_info(),
-            to: ctx.accounts.signer.to_account_info(),
-            
-        },
-    );
-    system_program::transfer(cpi_context, lamports_to_transfer)?; */
-
     **ctx
             .accounts
             .game
@@ -94,8 +134,6 @@ pub fn claim(ctx: Context<Claim>) -> Result<()> {
     return Ok(());
 
 }
-
-
 
 pub fn solve(ctx: Context<Initialize>, width:u8, height:u8, id_nft:u32,  map_data:Vec<u8>, directions: Vec<u8>) -> Result<()> {
    
@@ -246,6 +284,7 @@ pub struct GameState {
     pub solved:bool,
     pub best_soluce:Vec<u8>,
     pub leader:Pubkey,
+    pub test:u32,
 
 }
     // 0 vide

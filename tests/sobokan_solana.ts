@@ -60,7 +60,7 @@ function displayBestSoluce(directions:ArrayBuffer) {
 
 async function walletInit() {
 
-  const balance = await provider.connection.getBalance(gamePDA);
+  //const balance = await provider.connection.getBalance(gamePDA);
   nftAccount = Keypair.generate();
   const lamports = 10 * LAMPORTS_PER_SOL;
   authority =Keypair.generate();
@@ -136,7 +136,7 @@ async function walletInit() {
 
 
     //await walletInit();
-    const id_nft = 2;
+    const id_nft = 1;
     //Création de la seed 
     const idBytes = new Uint8Array(new Uint32Array([id_nft]).buffer);
     const seeds = 
@@ -157,32 +157,14 @@ async function walletInit() {
     console.log("BalancePDA", balancePda);
     console.log("BalanceUser", balanceUser)
       
-     //Changement d'id du nft 
-    tx = await game.rpc.setId(2, {
-       accounts: {
-         minterProgram : createNft.programId,
-         nftAccount : nftAccount.publicKey,
-       },
-       
-     });  
+    
 
-     nftAccountInfo = await createNft.account.nftAccount.fetch(nftAccount.publicKey);
-     console.log("id= ", nftAccountInfo.id )
-     console.log("chagement de l'id pour tester OK")
    
 
 
     //Demande de résolution d'une séquence de mouvement 
     const moveSequence = Buffer.from( [3,1,3, 2,1,2,3]);
-    /*
-    tx = await game.rpc.solve(nftAccountInfo.width, nftAccountInfo.height, id_nft, nftAccountInfo.data, moveSequence, {
-      accounts: {
-        game : gamePDA,
-        signer: authority.publicKey,
-        systemProgram: game.programId,
-      },
-      signers: [authority],
-    }); */
+   
 
     tx = await game.methods
     .solve(nftAccountInfo.width, nftAccountInfo.height, id_nft, nftAccountInfo.data, moveSequence)
@@ -208,17 +190,33 @@ async function walletInit() {
     console.log("Balance du PDA:", balancePda);
     console.log("Balance du user:", balanceUser);
 
-   // await walletInit();
-/*
-    tx = await game.rpc.claim( {
+     /*
+    tx = await game.rpc.setId(2, {
       accounts: {
-        game : gamePDA,
-        signer: authority.publicKey,
-        systemProgram: game.programId,
+        game : gamePDA, 
+        minterProgram : createNft.programId,
+        nftAccount : nftAccount.publicKey,
       },
-      signers: [authority],
-    }); 
-*/
+      signers: [nftAccount, authority],
+         
+    });  
+    /*
+    tx = await game.methods
+    .setId(2)
+    .accounts({
+          minterProgram : createNft.programId,
+          game : gamePDA,
+          nftAccount : nftAccount.publicKey,
+    })
+    .signers([authority], [nftAccount])
+    .rpc();
+
+    nftAccountInfo = await createNft.account.nftAccount.fetch(nftAccount.publicKey);
+    console.log("id= ", nftAccountInfo.id )
+    updatedGame = await game.account.gameState.fetch(gamePDA);
+    console.log("test= ", updatedGame.test )
+    console.log("chagement de l'id pour tester OK")  */
+
     tx = await game.methods
     .claim() 
     .accounts({
@@ -230,6 +228,7 @@ async function walletInit() {
     .signers([authority])
     .rpc();
     
+    console.log("Claim Ok")
     balancePda = await provider.connection.getBalance(gamePDA);
     balanceUser = await provider.connection.getBalance(authority.publicKey);
     console.log("Balance du PDA:", balancePda);

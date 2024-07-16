@@ -19,8 +19,13 @@ pub mod solver {
         soluce_checker::claim(ctx)
     }
 
+    /*
     pub fn set_id(ctx: Context<GetData>, id:u32) -> Result<()> {
         soluce_checker::set_id(ctx, id)
     }
-
+*/
+ 
+    pub fn read_other_data(ctx: Context<ReadOtherData>) -> Result<()> {
+        soluce_checker::read_other_data(ctx)
+    }
 }
